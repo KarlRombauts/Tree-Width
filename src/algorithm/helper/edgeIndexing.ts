@@ -34,7 +34,7 @@ export function buildAdjacencyList(edges: Edge[]): AdjacencyList {
   return edges.reduce(addToAdjacencyList, {});
 }
 
-function addToAdjacencyList(
+export function addToAdjacencyList(
   adjacencyList: AdjacencyList,
   { v, u, weight }: Edge,
 ): AdjacencyList {

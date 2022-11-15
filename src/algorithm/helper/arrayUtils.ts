@@ -1,5 +1,5 @@
 import { Vertex } from '../graph';
-import { mod } from '../utils';
+import { mod } from './edgeIndexing';
 
 export function getDuplicates<T>(array: T[]): T[] {
   const seen = new Set<T>();

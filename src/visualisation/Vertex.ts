@@ -20,7 +20,7 @@ export class Vertex implements Interactable {
   }
 
   randomPosition() {
-    const x = random(this.radius, width - this.radius);
+    const x = random(this.radius, width / 2 - this.radius);
     const y = random(this.radius, height - this.radius);
     return createVector(x, y);
   }

@@ -2,7 +2,10 @@
 import p5, { Vector } from 'p5';
 //@ts-ignore
 import { sketch } from 'p5js-wrapper';
-import { without } from 'ramda';
+import { maxBy, without } from 'ramda';
+import { buildTreeDecomposition } from './algorithm/eliminationOrdering';
+import { Graph } from './algorithm/graph';
+import { Bag } from './algorithm/treeDecomposition';
 
 import './style.css';
 import {
@@ -16,10 +19,12 @@ import {
   getMousePos,
   setHoverState,
 } from './visualisation/mouseUtils';
+import { renderTree } from './visualisation/tree';
 import { defaultState } from './visualisation/Types';
 import {
   renderActiveVertex,
   renderInactiveVertex,
+  renderVertex,
   Vertex,
 } from './visualisation/Vertex';
 
@@ -30,22 +35,29 @@ enum Mode {
 
 let verts: Vertex[] = [];
 let edges: Edge[] = [];
-let numVerts = 5;
+let numVerts = 2;
 let displayText = 'Add some vertices and edges';
 let draggedVert: Vertex | undefined = undefined;
 let dragOffset: Vector | undefined = undefined;
 let selectedVert: Vertex | undefined = undefined;
 let mode = Mode.MOVING;
 let tempEdge = [];
+let eliminationOrdering: number[] = [];
 
 sketch.setup = function () {
-  createCanvas(500, 500);
+  createCanvas(1200, 600);
 
   for (let i = 0; i < numVerts; i++) {
     verts.push(new Vertex(i));
+    eliminationOrdering.push(i);
   }
 
   createEdge(verts[0], verts[1]);
+  const button = createButton('shuffle ordering');
+  button.position(0, 800);
+  button.mousePressed(
+    () => (eliminationOrdering = shuffle(eliminationOrdering)),
+  );
 };
 
 function fullyConnectGraph() {
@@ -64,6 +76,11 @@ sketch.draw = function () {
   fill(0);
   textSize(20);
   text(displayText, 10, 490);
+
+  const graph = convertToGraph(edges);
+  const { bags, tree } = buildTreeDecomposition(graph, eliminationOrdering);
+
+  renderTree(tree, bags);
 };
 
 sketch.mouseMoved = function () {
@@ -108,6 +125,7 @@ function createVertex(position: Vector) {
   verts.push(newVert);
   draggedVert = newVert;
   dragOffset = getDragOffset(draggedVert);
+  eliminationOrdering.push(newVert.id);
 }
 
 function deleteVert(vert: Vertex) {
