@@ -1,5 +1,5 @@
-import { Vector } from 'p5';
 import { isNil, without } from 'ramda';
+import { getMaxBy, getMinBy } from './helper/arrayUtils';
 import { AdjacencyList } from './helper/edgeIndexing';
 
 export type Vertex = number;
@@ -43,32 +43,35 @@ export class Graph {
     return Object.keys(this.adjacencyList).map((key) => parseInt(key));
   }
 
+  getNumVertices(): number {
+    return Object.keys(this.adjacencyList).length;
+  }
+
   getDegree(vertex: Vertex) {
     return this.getNeighbours(vertex).length;
   }
 
-  getMaxDegreeVertex() {
-    const vertices = this.getVertices();
-    let currentMax = vertices[0];
+  getFillIn(vertex: Vertex) {
+    const neighbours = this.getNeighbours(vertex);
+    let fillIn = 0;
 
-    for (let vertex of vertices) {
-      if (this.getDegree(vertex) > this.getDegree(currentMax)) {
-        currentMax = vertex;
+    for (let i = 0; i < neighbours.length; i++) {
+      for (let j = i + 1; j < neighbours.length; j++) {
+        if (!this.areAdjacent(neighbours[i], neighbours[j])) {
+          fillIn++;
+        }
       }
     }
-    return currentMax;
+
+    return fillIn;
+  }
+
+  getMaxDegreeVertex() {
+    return getMaxBy(this.getDegree.bind(this), this.getVertices());
   }
 
   getMinDegreeVertex() {
-    const vertices = this.getVertices();
-    let currentMin = vertices[0];
-
-    for (let vertex of vertices) {
-      if (this.getDegree(vertex) < this.getDegree(currentMin)) {
-        currentMin = vertex;
-      }
-    }
-    return currentMin;
+    return getMinBy(this.getDegree.bind(this), this.getVertices());
   }
 
   getEdges() {

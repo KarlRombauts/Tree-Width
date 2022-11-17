@@ -21,6 +21,7 @@
     "@types/ramda": "^0.28.15",
     "edmonds-blossom": "https://github.com/joudinet/EdmondsBlossom.git#fix-missing-var-decl",
     "jest": "^29.1.2",
+    "nano-memoize": "^1.3.1",
     "npm": "^8.19.2",
     "p5": "^1.3.1",
     "p5js-wrapper": "^1.2.3",

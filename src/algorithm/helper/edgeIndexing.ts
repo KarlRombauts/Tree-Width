@@ -1,4 +1,4 @@
-import { Edge } from './graph';
+import { Edge } from '../graph';
 
 export class Counter {
   map = new Map<number, number>();

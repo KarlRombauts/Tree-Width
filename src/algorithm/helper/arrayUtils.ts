@@ -1,5 +1,6 @@
 import { Vertex } from '../graph';
 import { mod } from './edgeIndexing';
+import { random } from './randomness';
 
 export function getDuplicates<T>(array: T[]): T[] {
   const seen = new Set<T>();
@@ -60,4 +61,58 @@ export function applyShortcuts(path: Vertex[], shortcuts: Vertex[][]) {
     outputPath.splice(i, 1);
   });
   return outputPath;
+}
+
+export function getMinBy<T>(weightFn: (element: T) => number, array: T[]) {
+  let minElement = array[0];
+  let minValue = weightFn(minElement);
+
+  for (let element of array.slice(1)) {
+    const currentValue = weightFn(element);
+    if (currentValue < minValue) {
+      minElement = element;
+      minValue = currentValue;
+    }
+  }
+  return minElement;
+}
+
+export function getMaxBy<T>(weightFn: (element: T) => number, array: T[]) {
+  let maxElement = array[0];
+  let maxValue = weightFn(maxElement);
+
+  for (let element of array.slice(1)) {
+    const currentValue = weightFn(element);
+    if (currentValue > maxValue) {
+      maxElement = element;
+      maxValue = currentValue;
+    }
+  }
+  return maxElement;
+}
+
+export function swapElements<T>(array: T[], i: number, j: number) {
+  [array[i], array[j]] = [array[j], array[i]];
+  return array;
+}
+
+export function shuffle<T>(array: T[]) {
+  let currentIndex = array.length;
+  let randomIndex;
+
+  const arrayCopy = [...array];
+  while (currentIndex > 0) {
+    randomIndex = random(0, currentIndex--);
+    swapElements(arrayCopy, currentIndex, randomIndex);
+  }
+
+  return arrayCopy;
+}
+
+export function pickByIndices<T>(indices: number[], items: T[]): T[] {
+  const picked = [];
+  for (let i of indices) {
+    picked.push(items[i]);
+  }
+  return picked;
 }

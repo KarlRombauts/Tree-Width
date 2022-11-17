@@ -1,206 +1,155 @@
 // @ts-ignore
-import p5, { Vector } from 'p5';
 //@ts-ignore
 import { sketch } from 'p5js-wrapper';
-import { maxBy, without } from 'ramda';
 import { buildTreeDecomposition } from './algorithm/eliminationOrdering';
+import { GeneticAlgorithm } from './algorithm/genetic/geneticAlgorithm';
 import { Graph } from './algorithm/graph';
-import { Bag } from './algorithm/treeDecomposition';
+import {
+  MinDegreeAndFillInOrdering,
+  MinDegreeOrdering,
+  MinFillInOrdering,
+  PermutationOrdering,
+} from './algorithm/Ordering';
 
+import { shuffle } from './algorithm/helper/arrayUtils';
 import './style.css';
-import {
-  convertToGraph,
-  getSubsetOfVisEdges,
-  getSubsetOfVisVertices,
-} from './visualisation/algoUtils';
-import { Edge, renderBlueEdge, renderEdge } from './visualisation/Edge';
-import {
-  getDragOffset,
-  getMousePos,
-  setHoverState,
-} from './visualisation/mouseUtils';
+import { GraphGUI, VisualGraph } from './visualisation/graph';
+import { createGraphSelector } from './visualisation/GraphPresets';
 import { renderTree } from './visualisation/tree';
-import { defaultState } from './visualisation/Types';
-import {
-  renderActiveVertex,
-  renderInactiveVertex,
-  renderVertex,
-  Vertex,
-} from './visualisation/Vertex';
+import { treeWidth as getTreeWidth } from './algorithm/treeDecomposition';
+import { getTextWidth } from './visualisation/textUtils';
 
-enum Mode {
-  ADDING_EDGE,
-  MOVING,
-}
-
-let verts: Vertex[] = [];
-let edges: Edge[] = [];
-let numVerts = 2;
 let displayText = 'Add some vertices and edges';
-let draggedVert: Vertex | undefined = undefined;
-let dragOffset: Vector | undefined = undefined;
-let selectedVert: Vertex | undefined = undefined;
-let mode = Mode.MOVING;
-let tempEdge = [];
-let eliminationOrdering: number[] = [];
+let graph: Graph = new Graph();
+let prevGraph: Graph = new Graph();
+let geneticAlgorithm = new GeneticAlgorithm(graph);
+let visualGraph: VisualGraph;
+let graphGUI: GraphGUI;
+let calculateTreeDecomposition = greedyDegreeMethod;
 
 sketch.setup = function () {
-  createCanvas(1200, 600);
+  createCanvas(window.innerWidth - 10, window.innerHeight - 155);
 
-  for (let i = 0; i < numVerts; i++) {
-    verts.push(new Vertex(i));
-    eliminationOrdering.push(i);
-  }
+  visualGraph = new VisualGraph();
+  graphGUI = new GraphGUI(visualGraph);
 
-  createEdge(verts[0], verts[1]);
-  const button = createButton('shuffle ordering');
-  button.position(0, 800);
-  button.mousePressed(
-    () => (eliminationOrdering = shuffle(eliminationOrdering)),
-  );
+  createGraphSelector((preset) => {
+    visualGraph.loadPreset(preset);
+  });
+  createMethodSelector();
 };
-
-function fullyConnectGraph() {
-  edges = [];
-  for (let i = 0; i < verts.length; i++) {
-    for (let j = i + 1; j < verts.length; j++) {
-      createEdge(verts[i], verts[j]);
-    }
-  }
-}
 
 sketch.draw = function () {
   background(230);
-  edges.forEach(renderEdge);
-  verts.forEach(renderActiveVertex);
   fill(0);
   textSize(20);
-  text(displayText, 10, 490);
 
-  const graph = convertToGraph(edges);
-  const { bags, tree } = buildTreeDecomposition(graph, eliminationOrdering);
+  text(displayText, 10, height - 20);
 
-  renderTree(tree, bags);
+  graphGUI.render();
+
+  const { bags, tree } = calculateTreeDecomposition(visualGraph.getGraph());
+  const treeWidthMsg = `Estimated Treewidth = ${getTreeWidth(bags)}`;
+  text(treeWidthMsg, width - 20 - getTextWidth(20, treeWidthMsg), 30);
+  renderTree(tree, bags, graphGUI.hoveredVertex?.id);
 };
 
+enum MethodOptions {
+  MinDegree = 'Min degree',
+  MinFillIn = 'Min fill-in',
+  MinDegreeFillIn = 'Min degree + fill-in',
+  Genetic = 'Genetic algorithm',
+}
+
+export function createMethodSelector() {
+  const select: any = createSelect();
+  select.position(140, 10);
+  select.option(MethodOptions.MinDegree);
+  select.option(MethodOptions.MinFillIn);
+  select.option(MethodOptions.MinDegreeFillIn);
+  select.option(MethodOptions.Genetic);
+
+  select.changed(() => {
+    const value: MethodOptions = select.value();
+    switch (value) {
+      case MethodOptions.MinDegree:
+        calculateTreeDecomposition = greedyDegreeMethod;
+        break;
+      case MethodOptions.MinFillIn:
+        calculateTreeDecomposition = greedyFillInMethod;
+        break;
+      case MethodOptions.MinDegreeFillIn:
+        calculateTreeDecomposition = greedyDegreeFillInMethod;
+        break;
+      case MethodOptions.Genetic:
+        calculateTreeDecomposition = geneticMethod;
+        break;
+    }
+  });
+}
+
+function greedyDegreeMethod(graph: Graph) {
+  return buildTreeDecomposition(graph, new MinDegreeOrdering());
+}
+
+function greedyFillInMethod(graph: Graph) {
+  return buildTreeDecomposition(graph, new MinFillInOrdering());
+}
+
+function greedyDegreeFillInMethod(graph: Graph) {
+  return buildTreeDecomposition(graph, new MinDegreeAndFillInOrdering());
+}
+
+function geneticMethod(graph: Graph) {
+  if (prevGraph !== graph) {
+    geneticAlgorithm = new GeneticAlgorithm(graph);
+  }
+  const { best: permutation } = geneticAlgorithm.executeRound();
+  const output = buildTreeDecomposition(
+    graph,
+    new PermutationOrdering(permutation),
+  );
+  prevGraph = graph;
+
+  return output;
+}
+
 sketch.mouseMoved = function () {
-  edges.forEach(setHoverState);
-  verts.forEach(setHoverState);
+  graphGUI.handleMouseMove();
 };
 
 sketch.mousePressed = function () {
-  const hoveredVert = verts.find((vert) => vert.state.hover);
-  if (!hoveredVert) {
-    return createVertex(getMousePos());
-  }
-
-  if (mode === Mode.MOVING) {
-    startDrag(hoveredVert);
-  }
-
-  if (mode === Mode.ADDING_EDGE) {
-    hoveredVert.state.selected = true;
-    if (!selectedVert) {
-      selectedVert = hoveredVert;
-    } else {
-      createEdge(selectedVert, hoveredVert);
-      clearSelected();
-    }
-  }
+  graphGUI.handleMousePress();
 };
 
-function startDrag(vertex: Vertex) {
-  draggedVert = vertex;
-  if (draggedVert) {
-    draggedVert.state.selected = true;
-    dragOffset = getDragOffset(draggedVert);
-  }
-}
-
-function createVertex(position: Vector) {
-  const maxId = verts.reduce((maxId, vert) => max(maxId, vert.id), 0);
-  const newVert = new Vertex(maxId + 1, position);
-  newVert.state.hover = true;
-  newVert.state.selected = true;
-  verts.push(newVert);
-  draggedVert = newVert;
-  dragOffset = getDragOffset(draggedVert);
-  eliminationOrdering.push(newVert.id);
-}
-
-function deleteVert(vert: Vertex) {
-  const edgesToDelete = edges.filter(
-    (edge) => edge.v === vert || edge.u === vert,
-  );
-  edges = without(edgesToDelete, edges);
-  verts = without([vert], verts);
-}
-
-function createEdge(u: Vertex, v: Vertex) {
-  const newEdge = new Edge(u, v);
-  if (isNonExistingEdge(newEdge)) {
-    edges.push(newEdge);
-  }
-}
-
-function deleteEdge(edge: Edge) {
-  edges = without([edge], edges);
-}
-
-function isNonExistingEdge(newEdge: Edge) {
-  return !edges.some((edge) => edge.equal(newEdge));
-}
-
 sketch.mouseReleased = function () {
-  if (draggedVert) {
-    draggedVert.state.selected = false;
-    draggedVert = undefined;
-  }
+  graphGUI.handleMouseRelease();
 };
 
 sketch.mouseDragged = function () {
-  if (draggedVert && dragOffset) {
-    draggedVert.position = Vector.sub(getMousePos(), dragOffset);
-  }
+  graphGUI.handleMouseDrag();
 };
 
 sketch.keyPressed = function keyPressed() {
   switch (keyCode) {
     case SHIFT:
-      mode = Mode.ADDING_EDGE;
-      return;
+      graphGUI.enterSelectMode();
+      break;
     case BACKSPACE:
-      return deleteUnderCursor();
+      graphGUI.deleteUnderCursor();
+      break;
   }
 
-  switch (key) {
-    case 'C':
-      fullyConnectGraph();
-  }
+  // switch (key) {
+  //   case 'C':
+  //     visualGraph.fullyConnectGraph();
+  // }
 };
 
 sketch.keyReleased = function keyReleased() {
   switch (keyCode) {
     case SHIFT:
-      mode = Mode.MOVING;
-      clearSelected();
+      graphGUI.exitSelectMode();
       break;
   }
 };
-
-function deleteUnderCursor() {
-  const hoveredVert = verts.find((vert) => vert.state.hover);
-  const hoveredEdge = edges.find((edge) => edge.state.hover);
-  if (hoveredVert) {
-    deleteVert(hoveredVert);
-  }
-  if (hoveredEdge) {
-    deleteEdge(hoveredEdge);
-  }
-}
-
-function clearSelected() {
-  verts.forEach((vert) => (vert.state = defaultState()));
-  verts.forEach(setHoverState);
-  selectedVert = undefined;
-}

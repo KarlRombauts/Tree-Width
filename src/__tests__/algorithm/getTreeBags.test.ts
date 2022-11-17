@@ -1,5 +1,7 @@
 import { getTreeBags } from '../../algorithm/eliminationOrdering';
+import { fitness } from '../../algorithm/genetic/fitness';
 import { Edge, Graph } from '../../algorithm/graph';
+import { PermutationOrdering } from '../../algorithm/Ordering';
 
 describe('Get tree bags', () => {
   test('Complete graph returns a bag containing all vertices', () => {
@@ -8,7 +10,7 @@ describe('Get tree bags', () => {
     G.addVertices(vertices);
     G.formClique(vertices);
 
-    const bags = getTreeBags(G, vertices);
+    const { bags } = getTreeBags(G, new PermutationOrdering(vertices));
     for (let i = 0; i < bags.length; i++) {
       const bag = [...bags[i]];
       expect(bag.sort()).toEqual(vertices.slice(i).sort());
@@ -38,7 +40,7 @@ describe('Get tree bags', () => {
       new Set([4]),
     ];
 
-    const bags = getTreeBags(G, eliminationOrdering);
+    const { bags } = fitness(G)(eliminationOrdering);
     expect(bags).toEqual(expectedBags);
   });
 
@@ -77,7 +79,10 @@ describe('Get tree bags', () => {
       new Set([8]),
     ];
 
-    const bags = getTreeBags(G, eliminationOrdering);
+    const { bags } = getTreeBags(
+      G,
+      new PermutationOrdering(eliminationOrdering),
+    );
     expect(bags).toEqual(expectedBags);
   });
 
@@ -113,7 +118,10 @@ describe('Get tree bags', () => {
       new Set([8]),
     ];
 
-    const bags = getTreeBags(G, eliminationOrdering);
+    const { bags } = getTreeBags(
+      G,
+      new PermutationOrdering(eliminationOrdering),
+    );
     expect(bags).toEqual(expectedBags);
   });
 
@@ -156,7 +164,10 @@ describe('Get tree bags', () => {
       new Set([9]),
     ];
 
-    const bags = getTreeBags(G, eliminationOrdering);
+    const { bags } = getTreeBags(
+      G,
+      new PermutationOrdering(eliminationOrdering),
+    );
     expect(bags).toEqual(expectedBags);
   });
 });

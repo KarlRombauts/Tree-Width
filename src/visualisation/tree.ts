@@ -2,8 +2,11 @@ import { Vector } from 'p5';
 import { Graph } from '../algorithm/graph';
 import { remove } from '../algorithm/helper/arrayUtils';
 import { Bag } from '../algorithm/treeDecomposition';
-import { renderTreeEdge, TreeEdge } from './TreeEdge';
+import { renderBlueTreeEdge, renderTreeEdge, TreeEdge } from './TreeEdge';
 import { Vertex } from './Vertex';
+import memo from 'nano-memoize';
+import { getTextHeight, getTextWidth } from './textUtils';
+import { nodeModuleNameResolver } from 'typescript';
 
 const PADDING = { x: 20, y: 30 };
 const MARGIN = { x: 16, y: 8 };
@@ -12,15 +15,21 @@ const TEXT_SIZE = 20;
 export class TreeNode {
   id: number;
   label: string;
+  bag: Bag;
   parent: TreeNode | null;
   children: TreeNode[];
   width: number | null;
 
-  constructor(id: number, parent: TreeNode | null, label?: string) {
+  constructor(id: number, parent: TreeNode | null, bag: Bag) {
     (this.id = id), (this.parent = parent);
-    this.label = label || this.id.toString();
+    this.bag = bag;
+    this.label = getLabel(bag);
     this.children = [];
     this.width = null;
+  }
+
+  containsVertex(vertex: number) {
+    return this.bag.has(vertex);
   }
 
   getWidth(): number {
@@ -38,15 +47,9 @@ export class TreeNode {
   }
 
   calculateWidth(): number {
-    textSize(TEXT_SIZE);
-    const ownWidth = textWidth(this.label) + MARGIN.x * 2;
+    const ownWidth = getTextWidth(TEXT_SIZE, this.label) + MARGIN.x * 2;
     const childrenWidth = calculateWidthOfNodes(this.children);
-
     return Math.max(ownWidth, childrenWidth);
-    // return (
-    //   this.children.reduce((total, child) => total + child.getWidth(), 0) +
-    //   PADDING * (this.children.length - 1)
-    // );
   }
 
   getTreeHeight(): number {
@@ -59,7 +62,7 @@ export class TreeNode {
 
   getPosition(): Vector {
     if (!this.parent) {
-      return createVector(900, 100);
+      return createVector(width * (2 / 3), 100);
     }
 
     const siblings = this.parent.children;
@@ -80,10 +83,7 @@ export class TreeNode {
       this.getWidth() / 2 -
       siblingWidth / 2;
     const y =
-      parentPosition.y +
-      PADDING.y +
-      MARGIN.y * 2 +
-      (textAscent() + textDescent());
+      parentPosition.y + PADDING.y + MARGIN.y * 2 + getTextHeight(TEXT_SIZE);
 
     return createVector(x, y);
   }
@@ -102,11 +102,11 @@ function renderTreeNodeText(node: TreeNode, color = 'black') {
   const pos = node.getPosition();
   noStroke();
   fill(color);
-  textSize(20);
+  textSize(TEXT_SIZE);
   text(
     node.label,
-    pos.x - textWidth(node.label) / 2,
-    pos.y + (textAscent() + textDescent()) / 4,
+    pos.x - getTextWidth(TEXT_SIZE, node.label) / 2,
+    pos.y + getTextHeight(TEXT_SIZE) / 4,
   );
 }
 
@@ -122,31 +122,48 @@ function renderTreeNodeRect(node: TreeNode, color: string = 'black') {
   rect(
     x,
     y,
-    textWidth(node.label) + MARGIN.x * 2,
-    textAscent() + textDescent() + MARGIN.y * 2,
+    getTextWidth(TEXT_SIZE, node.label) + MARGIN.x * 2,
+    getTextHeight(TEXT_SIZE) + MARGIN.y * 2,
     20,
   );
 }
 
-export function renderTreeNode(node: TreeNode, color = 'black') {
+function treeEdgeHighlighted(edge: TreeEdge, hoveredVertexId?: number) {
+  if (!hoveredVertexId) {
+    return false;
+  }
+  const { child, parent } = edge;
+  return (
+    child.containsVertex(hoveredVertexId) &&
+    parent.containsVertex(hoveredVertexId)
+  );
+}
+
+export function renderTreeNode(node: TreeNode, hoveredVertexId?: number) {
   node.children.forEach((child) => {
     const edge = new TreeEdge(node, child);
-    renderTreeEdge(edge);
+    if (treeEdgeHighlighted(edge, hoveredVertexId)) {
+      renderBlueTreeEdge(edge);
+    } else {
+      renderTreeEdge(edge);
+    }
   });
-  renderTreeNodeRect(node, color);
-  renderTreeNodeText(node, color);
+  if (hoveredVertexId !== undefined && node.containsVertex(hoveredVertexId)) {
+    renderTreeNodeRect(node, 'blue');
+    renderTreeNodeText(node, 'blue');
+  } else {
+    renderTreeNodeRect(node, 'black');
+    renderTreeNodeText(node, 'black');
+  }
+
   node.children.forEach((child) => {
-    renderTreeNode(child);
+    renderTreeNode(child, hoveredVertexId);
   });
 }
 
-export function renderTree(
-  tree: Graph,
-  bags: Bag[],
-  root: number | null = null,
-) {
-  const rootTreeNode = buildTree(tree, bags, root);
-  renderTreeNode(rootTreeNode);
+export function renderTree(tree: Graph, bags: Bag[], hoveredVertexId?: number) {
+  const rootTreeNode = buildTree(tree, bags, null);
+  renderTreeNode(rootTreeNode, hoveredVertexId);
 }
 
 function getLabel(bag: Bag) {
@@ -166,7 +183,7 @@ function buildTree(
   }
 
   const bag = bags[node];
-  const visualNode = new TreeNode(node, null, getLabel(bag));
+  const visualNode = new TreeNode(node, null, bag);
 
   const neighbours = tree.getNeighbours(node);
   if (prevRoot !== null) {

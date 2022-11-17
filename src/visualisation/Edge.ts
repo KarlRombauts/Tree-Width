@@ -4,7 +4,6 @@ import { defaultState, State } from './Types';
 import { Vertex } from './Vertex';
 
 const HOVER_TOLERANCE = 0.5;
-const TEXT_OFFSET = 14;
 
 export class Edge implements Interactable {
   v: Vertex;
@@ -45,52 +44,26 @@ export class Edge implements Interactable {
   }
 }
 
-function renderLine(edge: Edge, color = 'black') {
-  const { state, v, u } = edge;
-  stroke(0);
-  strokeWeight(2);
+export type EdgeOptions = {
+  weight?: number;
+  strokeColor?: string;
+};
 
-  if (state.hover) {
-    stroke(200, 0, 0);
-    strokeWeight(3);
-  }
-
-  stroke(color);
-  fill(color);
-
-  if (state.selected) {
-    fill(100, 255, 255);
-  }
+export function renderEdge(
+  edge: Edge,
+  { strokeColor = 'black', weight = 2 }: EdgeOptions = {},
+) {
+  const { v, u } = edge;
+  stroke(strokeColor);
+  strokeWeight(weight);
 
   line(v.position.x, v.position.y, u.position.x, u.position.y);
 }
 
-export function renderWeight(edge: Edge, color = 'black') {
-  const mid = edge.getMidpoint();
-  const { v, u } = edge;
-  const offset = perp(Vector.sub(v.position, u.position)).setMag(TEXT_OFFSET);
-  const textPos = Vector.add(mid, offset);
-  const label = edge.getWeight().toString();
-
-  noStroke();
-  fill(color);
-  textSize(20);
-  text(
-    label,
-    textPos.x - textWidth(label) / 2,
-    textPos.y + (textAscent() + textDescent()) / 4,
-  );
-}
-
-export function renderEdge(edge: Edge) {
-  // renderWeight(edge);
-  renderLine(edge, 'gray');
-}
-
 export function renderBlueEdge(edge: Edge) {
-  renderLine(edge, 'blue');
+  renderEdge(edge, { strokeColor: '#0048ff' });
 }
 
-function perp(vector: Vector) {
-  return createVector(-vector.y, vector.x);
+export function renderHoverEdge(edge: Edge) {
+  renderEdge(edge, { weight: 3 });
 }

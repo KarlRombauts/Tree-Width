@@ -26,3 +26,7 @@ class TreeDecomposition {
     }
   }
 }
+
+export function treeWidth(bags: Bag[]) {
+  return bags.reduce((max, bag) => Math.max(max, bag.size), 0) - 1;
+}
