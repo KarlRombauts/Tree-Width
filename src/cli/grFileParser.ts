@@ -1,4 +1,3 @@
-import { abort } from 'process';
 import { Edge, Graph } from '../algorithm/graph';
 
 export function parseGraphFile(contents: string) {

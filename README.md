@@ -2,6 +2,9 @@
 
 An implementation of various treewidth algorithms, a cli tool and a visualisation tool.
 
+DEMO (desktop only): https://treewidth-visualisation.netlify.app/ 
+
+## File Structure 
 - Algorithm related files are under `src/algorithm`
 - Visualisation related files are under `src/visualisation`
 - Cli related files are under `src/cli`

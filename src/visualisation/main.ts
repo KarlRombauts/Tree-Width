@@ -1,6 +1,6 @@
 // @ts-ignore
-//@ts-ignore
 import { Renderer } from 'p5';
+//@ts-ignore
 import { sketch } from 'p5js-wrapper';
 import {
   buildTreeDecomposition,
@@ -24,7 +24,6 @@ import { renderTree } from './tree';
 
 let displayText = 'Add some vertices and edges';
 let graph: Graph = new Graph();
-let canvas: Renderer;
 let prevGraph: Graph = new Graph();
 let geneticAlgorithm = new GeneticAlgorithm(graph);
 const { order: order1 } = getTreeBags(graph, new MinDegreeOrdering());
@@ -39,7 +38,7 @@ let graphGUI: GraphGUI;
 let calculateTreeDecomposition = greedyDegreeMethod;
 
 sketch.setup = function () {
-  canvas = createCanvas(window.innerWidth - 10, window.innerHeight - 155);
+  createCanvas(window.innerWidth - 10, window.innerHeight - 155);
 
   visualGraph = new VisualGraph();
   graphGUI = new GraphGUI(visualGraph);
