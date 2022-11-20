@@ -1,5 +1,5 @@
 import { Edge, Vertex } from '../graph';
-import { indexEdgesByVertex } from '../utils';
+import { indexEdgesByVertex } from './edgeIndexing';
 
 export function pathToEdges(edges: Edge[], path: Vertex[]) {
   const edgeIndex = indexEdgesByVertex(edges);

@@ -116,3 +116,12 @@ export function pickByIndices<T>(indices: number[], items: T[]): T[] {
   }
   return picked;
 }
+
+export function getNonEmptyIndices<T>(array: T[]): number[] {
+  return array.reduce<number[]>((indices, item, index) => {
+    if (item !== undefined) {
+      indices.push(index);
+    }
+    return indices;
+  }, []);
+}

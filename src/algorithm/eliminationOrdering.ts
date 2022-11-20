@@ -2,7 +2,6 @@ import { range } from 'ramda';
 import { Edge, Graph } from './graph';
 import { Ordering } from './Ordering';
 import { Bag } from './treeDecomposition';
-import memo from 'nano-memoize';
 
 export function getTreeBags(G: Graph, eliminationOrdering: Ordering) {
   const H = G.copy();
@@ -21,22 +20,23 @@ export function getTreeBags(G: Graph, eliminationOrdering: Ordering) {
   return { bags, order };
 }
 
-export const buildTreeDecomposition = memo(
-  (G: Graph, eliminationOrdering: Ordering) => {
-    const { bags, order } = getTreeBags(G, eliminationOrdering);
-    const tree = new Graph();
-    tree.addVertices(range(0, bags.length));
+export const buildTreeDecomposition = (
+  G: Graph,
+  eliminationOrdering: Ordering,
+) => {
+  const { bags, order } = getTreeBags(G, eliminationOrdering);
+  const tree = new Graph();
+  tree.addVertices(range(0, bags.length));
 
-    const V = order;
-    for (let i = 0; i < bags.length; i++) {
-      const bag = bags[i];
-      for (let j = i + 1; j < bags.length; j++) {
-        if (bag.has(V[j])) {
-          tree.addEdge(new Edge(i, j));
-          break;
-        }
+  const V = order;
+  for (let i = 0; i < bags.length; i++) {
+    const bag = bags[i];
+    for (let j = i + 1; j < bags.length; j++) {
+      if (bag.has(V[j])) {
+        tree.addEdge(new Edge(i, j));
+        break;
       }
     }
-    return { tree, bags };
-  },
-);
+  }
+  return { tree, bags };
+};

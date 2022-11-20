@@ -1,5 +1,4 @@
 import { getTreeBags } from '../../algorithm/eliminationOrdering';
-import { fitness } from '../../algorithm/genetic/fitness';
 import { Edge, Graph } from '../../algorithm/graph';
 import { PermutationOrdering } from '../../algorithm/Ordering';
 
@@ -40,7 +39,10 @@ describe('Get tree bags', () => {
       new Set([4]),
     ];
 
-    const { bags } = fitness(G)(eliminationOrdering);
+    const { bags } = getTreeBags(
+      G,
+      new PermutationOrdering(eliminationOrdering),
+    );
     expect(bags).toEqual(expectedBags);
   });
 

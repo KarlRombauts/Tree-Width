@@ -1,5 +1,5 @@
 import { Edge } from '../../algorithm/graph';
-import { createNeighboursIndex } from '../../algorithm/utils';
+import { createNeighboursIndex } from '../../algorithm/helper/edgeIndexing';
 
 describe('Neighbours', () => {
   test('graph with single edge adds neighbour for both vertices', () => {

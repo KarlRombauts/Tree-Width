@@ -56,7 +56,7 @@ function renderVertexCircle(
     fillColor = 'white',
   }: VertexOptions = {},
 ) {
-  const { radius, position, state } = vertex;
+  const { radius, position } = vertex;
   const { x, y } = position;
 
   stroke(strokeColor);

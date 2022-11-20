@@ -8,7 +8,7 @@
     "sourceMap": true,
     "resolveJsonModule": true,
     "esModuleInterop": true,
-    "types": ["vite/client", "jest", "p5"],
+    "types": ["vite/client", "jest", "p5", "node"],
     "noEmit": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,

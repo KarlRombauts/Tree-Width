@@ -166,7 +166,6 @@ function createStarGraph(): VisualGraph {
   const V = [];
 
   const radius = 200;
-  const innerRadius = 100;
   const n = 5;
 
   V.push(new Vertex(1, center));

@@ -1,9 +1,9 @@
-import { range, zip } from 'ramda';
+import { zip } from 'ramda';
 import { Graph } from '../graph';
 import { getMaxBy, shuffle } from '../helper/arrayUtils';
 import { random } from '../helper/randomness';
 import { fitness, FitnessFunction } from './fitness';
-import { exchangeMutation, insertionMutation } from './mutation';
+import { insertionMutation } from './mutation';
 import { orderBasedCrossover } from './orderBasedCrossover';
 import { orderCrossover } from './orderCrossover';
 import { selection } from './selection';
@@ -27,10 +27,11 @@ export class GeneticAlgorithm {
 
   constructor(
     graph: Graph,
+    permutations: number[][] = [],
     {
-      populationSize = 30,
+      populationSize = 20,
       elitism = 0.1,
-      tournamentRatio = 0.2,
+      tournamentRatio = 0.3,
       mutationRate = 0.8,
     }: GeneticOptions = {},
   ) {
@@ -38,7 +39,10 @@ export class GeneticAlgorithm {
     this.fitness = fitness(graph);
     this.elitismRatio = elitism;
     this.populationSize = populationSize;
-    this.population = this.createRandomPopulation(populationSize);
+    this.population = [
+      ...permutations,
+      ...this.createRandomPopulation(populationSize - permutations.length),
+    ];
     this.scores = this.population.map((permutation) =>
       this.fitness(permutation),
     );
@@ -78,9 +82,6 @@ export class GeneticAlgorithm {
       this.scores,
       this.getTournamentSize(),
     );
-    console.log(this.population);
-    console.log(this.scores);
-    console.log(selected);
 
     const elites = this.getElites(); //.map((elite) => {
     newPopulation.push(...elites);
@@ -116,14 +117,6 @@ export class GeneticAlgorithm {
     const nonElites = this.populationSize * (1 - this.elitismRatio);
     const roundedNonElites = Math.round(nonElites / 2) * 2; // Round to an even number
     return this.populationSize - roundedNonElites;
-  }
-
-  tournamentSelection() {
-    const tournamentSize = Math.round(
-      this.populationSize * this.tournamentRatio,
-    );
-    const tournament = shuffle(this.population).slice(0, tournamentSize);
-    return getMaxBy((permutation) => this.fitness(permutation), tournament);
   }
 
   crossover(parent1: number[], parent2: number[]) {

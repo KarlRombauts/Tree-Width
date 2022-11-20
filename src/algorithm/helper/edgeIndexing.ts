@@ -26,6 +26,7 @@ export class Counter {
   }
 }
 
+export type AdjacencyMatrix = number[][];
 export type AdjacencyList = Record<number, Record<number, number>>;
 export type EdgeIndex = Record<number, Record<number, Edge>>;
 export type Neighbours = Record<number, number[]>;

@@ -29,7 +29,7 @@ export class VisualGraph {
   dragOffset?: Vector;
 
   constructor() {
-    this.loadPreset(Preset.Default);
+    this.loadPreset(Preset.Petersen);
   }
 
   loadPreset(preset: Preset) {
@@ -93,7 +93,7 @@ export class VisualGraph {
   }
 
   render() {
-    this.edges.forEach(renderEdge);
+    this.edges.forEach((edge) => renderEdge(edge));
     this.vertices.forEach(renderActiveVertex);
   }
 

@@ -3,10 +3,7 @@ import { Graph } from '../algorithm/graph';
 import { remove } from '../algorithm/helper/arrayUtils';
 import { Bag } from '../algorithm/treeDecomposition';
 import { renderBlueTreeEdge, renderTreeEdge, TreeEdge } from './TreeEdge';
-import { Vertex } from './Vertex';
-import memo from 'nano-memoize';
 import { getTextHeight, getTextWidth } from './textUtils';
-import { nodeModuleNameResolver } from 'typescript';
 
 const PADDING = { x: 20, y: 30 };
 const MARGIN = { x: 16, y: 8 };
